@@ -149,6 +149,10 @@ and users at stackoverflow for the idea to use Python3 localhosting for debuggin
     </div>
 
     <div class="container">
+      <div id="timing-info" style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 5px;">
+        <h3 style="margin-bottom: 10px;">Time Calculated per Search</h3>
+        <div id ="time-display"></div>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -166,6 +170,7 @@ and users at stackoverflow for the idea to use Python3 localhosting for debuggin
             </tbody>
         </table>
     </div>
+
     <script src="algorithms.js"></script>
     <script>
       let songsDatabase = [];
@@ -260,11 +265,11 @@ and users at stackoverflow for the idea to use Python3 localhosting for debuggin
 
     function getRecommendations() {
       const song_input = document.getElementById('fsong').value;
-      const algorithm = document.getElementById('search_algorithm').value;
+      const search_algorithm = document.getElementById('search_algorithm').value;
       const explicit_filter = document.getElementById('explicit').value;
 
       if (!song_input) {
-        alert('Please enter a song name');
+        alert('No input. Try typing any song to get started!');
         return;
       }
 
@@ -289,26 +294,57 @@ and users at stackoverflow for the idea to use Python3 localhosting for debuggin
       use_danceability ? query_song.danceability : 0.5,
       use_energy ? query_song.energy : 0.5];
 
-    let k = 21;
+    let k = 200;
+    let display_count = 100;
     let nearest;
+    let kd_time;
+    let oct_time;
 
-    if (algorithm === 'kd-tree') {
+    if (search_algorithm === 'kd-tree') {
+      const kd_start = performance.now();
       nearest = kdTree.k_nearest_n(queryPoint, k);
+      const kd_end = performance.now();
+      kd_time = kd_end - kd_start;
     }
     else {
+      const oct_start = performance.now();
       let qNode = new Oct_Node(null, null, queryPoint[0], queryPoint[1], queryPoint[2]);
       nearest = octree.k_nearest_n(qNode, k);
+      const oct_end = performance.now();
+      oct_time = oct_end - oct_start;
     }
 
     let recommendations = nearest.filter(
       node => node !== null && node.song.name !== query_song.name)
       .filter(node => {
-        if (explicit_filter === 'yes') return node.song.explicit === 'True';
-        if (explicit_filter === 'no') return node.song.explicit === 'False';
+        const isExplicit = node.song.explicit === 1 || node.song.explicit === '1';
+        if (explicit_filter === 'yes') return isExplicit;
+        if (explicit_filter === 'no') return !isExplicit;
         return true;
-      }).slice(0, 20);
+      }).slice(0, display_count);
 
     displayResults(recommendations, query_song, use_danceability, use_acousticness, use_energy);
+    if (search_algorithm === 'kd-tree') {
+      displayTiming(kd_time, 'KD-Tree');
+    }
+    else {
+      displayTiming(oct_time, 'Octree');
+    }
+  }
+
+  function displayTiming(time, search_algorithm) {
+    const timing_display = document.getElementById('time-display');
+
+    if (!timing_display) {
+      console.warn('Error with timing display.');
+      return;
+    }
+
+    timing_display.innerHTML = `
+    <div style="padding: 10px;">
+      ${search_algorithm} timed in at ${time.toFixed(50)}ms.
+    </div>
+    `;
   }
 
     function displayResults(recommendations, query_song, use_danceability, use_acousticness, use_energy) {
