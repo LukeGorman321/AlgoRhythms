@@ -1,52 +1,52 @@
-const input = document.getElementById('csvFile');
-      input.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = event => {
-          const lines = event.target.result.trim().split('\n');
-		  
-		  let songs = [];
-		  let in_quote = false;
-		  let line = [];
-          for (let i = 1; i < lines.length; i++) {
-			  line = [""];
-			  for (let j = 0; j < lines[i].length; j++) {
-				 if (lines[i][j] == '"') {
-					 in_quote = !in_quote;
-				 } else if (lines[i][j] == ',' && !in_quote) {
-					 line.push("");
-				 } else {
-					 line[line.length-1] += lines[i][j];
-				 }
-			  }
-			  
-			  songs.push(new Song(line));
-		  }	  
-          console.log(songs[0]);
-		  
-		  let root = new KD_Node(null, songs[0], songs[0].acousticness, songs[0].danceability, songs[0].energy);
-		  let rooto = new Oct_Node(null, songs[0], songs[0].acousticness, songs[0].danceability, songs[0].energy);
-		  let tree = new KD_Tree(root);
-		  let octopus = new Octree(rooto);
-		  
-		  for (let i = 1; i < songs.length; i++) {
-			  tree.insert(new KD_Node(null, songs[i], songs[i].acousticness, songs[i].danceability, songs[i].energy)); 
-			  octopus.insert(new Oct_Node(null, songs[i], songs[i].acousticness, songs[i].danceability, songs[i].energy));
-		  }
-		  
-		  let k = 20;
-		  let kd_nearest = tree.k_nearest_n([0.5, 0.5, 0.5], k);
-		  let qNode = new Oct_Node(null, null, 0.5, 0.5, 0.5);
-		  let oct_nearest = octopus.k_nearest_n(qNode, k);
-		  		  
-		  for (let i = 0; i < k; i++) {
-			  console.log(i + " " + kd_nearest[i].song.name + " " + distance([0.5, 0.5, 0.5], kd_nearest[i]));
-			  console.log(i + " " + oct_nearest[i].song.name + " " + distance([0.5, 0.5, 0.5], oct_nearest[i]));
-		  }
-        };
-        reader.readAsText(file);
-      });
+// const input = document.getElementById('csvFile');
+//       input.addEventListener('change', e => {
+//         const file = e.target.files[0];
+//         if (!file) return;
+//         const reader = new FileReader();
+//         reader.onload = event => {
+//           const lines = event.target.result.trim().split('\n');
+//
+// 		  let songs = [];
+// 		  let in_quote = false;
+// 		  let line = [];
+//           for (let i = 1; i < lines.length; i++) {
+// 			  line = [""];
+// 			  for (let j = 0; j < lines[i].length; j++) {
+// 				 if (lines[i][j] == '"') {
+// 					 in_quote = !in_quote;
+// 				 } else if (lines[i][j] == ',' && !in_quote) {
+// 					 line.push("");
+// 				 } else {
+// 					 line[line.length-1] += lines[i][j];
+// 				 }
+// 			  }
+//
+// 			  songs.push(new Song(line));
+// 		  }
+//           console.log(songs[0]);
+//
+// 		  let root = new KD_Node(null, songs[0], songs[0].acousticness, songs[0].danceability, songs[0].energy);
+// 		  let rooto = new Oct_Node(null, songs[0], songs[0].acousticness, songs[0].danceability, songs[0].energy);
+// 		  let tree = new KD_Tree(root);
+// 		  let octopus = new Octree(rooto);
+//
+// 		  for (let i = 1; i < songs.length; i++) {
+// 			  tree.insert(new KD_Node(null, songs[i], songs[i].acousticness, songs[i].danceability, songs[i].energy));
+// 			  octopus.insert(new Oct_Node(null, songs[i], songs[i].acousticness, songs[i].danceability, songs[i].energy));
+// 		  }
+//
+// 		  let k = 20;
+// 		  let kd_nearest = tree.k_nearest_n([0.5, 0.5, 0.5], k);
+// 		  let qNode = new Oct_Node(null, null, 0.5, 0.5, 0.5);
+// 		  let oct_nearest = octopus.k_nearest_n(qNode, k);
+//
+// 		  for (let i = 0; i < k; i++) {
+// 			  console.log(i + " " + kd_nearest[i].song.name + " " + distance([0.5, 0.5, 0.5], kd_nearest[i]));
+// 			  console.log(i + " " + oct_nearest[i].song.name + " " + distance([0.5, 0.5, 0.5], oct_nearest[i]));
+// 		  }
+//         };
+//         reader.readAsText(file);
+//       });
 
 class Song {
 	constructor(info) {
@@ -82,7 +82,7 @@ class KD_Node {
 		this.parent_node = parent_node;
 		this.depth = 0;
 	}
-	
+
 	toString() {
 		let output = this.depth + ": Song Name: " + this.song.name + " x: " + this.point[0] + " y: " + this.point[1] + " z: " + this.point[2] + " dimension: " + this.dimension + "\n";
 		if (this.left != null) {
@@ -93,7 +93,7 @@ class KD_Node {
 		}
 		return output + "\n";
 	}
-	
+
 	k_nearest_n(point, best_songs, best_values, k) {
 		let left = false;
 		// iterate down
@@ -107,13 +107,13 @@ class KD_Node {
 		} else {
 			left = true;
 		}
-		
+
 		// insert into best_songs
 		let curr_dist = distance(point, this);
 		let iter_node = this;
 		let temp_dist = 0;
 		let temp_node = null;
-		
+
 		for (let i = 0; i < k; i++) {
 			if (best_songs[i] === null) {
 				best_songs[i] = iter_node;
@@ -123,16 +123,16 @@ class KD_Node {
 			if (curr_dist < best_values[i]) {
 				temp_dist = best_values[i];
 				temp_node = best_songs[i];
-				
+
 				best_songs[i] = iter_node;
 				best_values[i] = curr_dist;
-				
+
 				iter_node = temp_node;
 				curr_dist = temp_dist;
 			}
 		}
-		
-		// Check other direction		
+
+		// Check other direction
 		if (best_songs[k-1] == null || (point[this.dimension] - this.point[this.dimension])**2 < best_values[k-1]) {
 			if (left && this.right !== null) {
 				this.right.k_nearest_n(point, best_songs, best_values, k);
@@ -151,7 +151,7 @@ class Oct_Node {
 		this.parent_node = parent_node;
 		this.depth = 0;
 	}
-	
+
 	getIndex(node) {
 		let index = 0;
 		if (node.point[0] > this.point[0]) { index++; }
@@ -159,7 +159,7 @@ class Oct_Node {
 		if (node.point[2] > this.point[2]) { index+=4; }
 		return index;
 	}
-	
+
 	toString() {
 		let output = this.depth + ": Song Name: " + this.song.name + " x: " + this.point[0] + " y: " + this.point[1] + " z: " + this.point[2] + "\n";
 		for (let i = 0; i < 8; i++) {
@@ -169,21 +169,21 @@ class Oct_Node {
 		}
 		return output + "\n";
 	}
-	
+
 	k_nearest_n(node, best_songs, best_values, k) {
 		let best_index = this.getIndex(node);
-		
+
 		// iterate down
 		if (this.children[best_index] != null) {
 			this.children[best_index].k_nearest_n(node, best_songs, best_values, k);
 		}
-			
+
 		// insert into best_songs
 		let curr_dist = distance(node.point, this);
 		let iter_node = this;
 		let temp_dist = 0;
 		let temp_node = null;
-		
+
 		for (let i = 0; i < k; i++) {
 			if (best_songs[i] === null) {
 				best_songs[i] = iter_node;
@@ -193,20 +193,20 @@ class Oct_Node {
 			if (curr_dist < best_values[i]) {
 				temp_dist = best_values[i];
 				temp_node = best_songs[i];
-				
+
 				best_songs[i] = iter_node;
 				best_values[i] = curr_dist;
-				
+
 				iter_node = temp_node;
 				curr_dist = temp_dist;
 			}
 		}
-		
+
 		// Check other directions
 		let best_possible_distance = 0;
 		for (let mask = 1; mask < 8; mask++) {
 			if (this.children[best_index ^ mask] != null) {
-				best_possible_distance = 0;	
+				best_possible_distance = 0;
 				if ((mask & 1) == 1) {
 					best_possible_distance += (node.point[0] - this.point[0])**2;
 				}
@@ -235,10 +235,10 @@ class KD_Tree {
 	constructor(root) {
 		this.root = root;
 	}
-	
+
 	insert(song) { // insert a new song node into the tree
 		let curr_node = this.root; // the node we are checking to see if it should be the parent
-		
+
 		while (true) { // traverse down the tree to find where to put the node
 			if (song.point[curr_node.dimension] > curr_node.point[curr_node.dimension]) {
 				if (curr_node.right === null) {
@@ -261,17 +261,17 @@ class KD_Tree {
 			}
 		}
 	}
-	
+
 	toString() {
 		return this.root.toString();
 	}
-	
+
 	k_nearest_n(point, k) { // find the k nearest neighbors of the point (x, y, z)
 		let best_songs = new Array(k).fill(null); // references to the k best songs
-		let best_values = []; // distance to k best songs		
-		
+		let best_values = []; // distance to k best songs
+
 		this.root.k_nearest_n(point, best_songs, best_values, k);
-		
+
 		return best_songs;
 	}
 }
@@ -280,7 +280,7 @@ class Octree {
 	constructor(root) {
 		this.root = root;
 	}
-	
+
 	insert(song) { // insert a new song node into the tree
 		let curr_node = this.root; // the node we are checking to see if it should be the parent
 		let index = -1;
@@ -295,17 +295,17 @@ class Octree {
 			curr_node = curr_node.children[index];
 		}
 	}
-	
+
 	toString() {
 		return this.root.toString();
 	}
-	
+
 	k_nearest_n(node, k) { // find the k nearest neighbors of the node
 		let best_songs = new Array(k).fill(null); // references to the k best songs
-		let best_values = []; // distance to k best songs		
-		
+		let best_values = []; // distance to k best songs
+
 		this.root.k_nearest_n(node, best_songs, best_values, k);
-		
+
 		return best_songs;
 	}
 }

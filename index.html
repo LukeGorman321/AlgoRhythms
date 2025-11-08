@@ -1,8 +1,374 @@
+<!--- Most HTML code is inspired from w3schools.com and geekforgeeks.org,
+and users at stackoverflow for the idea to use Python3 localhosting for debugging --->
 <!DOCTYPE html>
-<html>
-  <body>
-    <input type="file" id="csvFile" accept=".csv" />
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecordRecs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: Georgia, serif;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 40px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        h2 {
+          font-size: 20px;
+          font-weight: bold;
+        }
+
+        p {
+          padding: 20px;
+        }
+
+        .csv {
+          text-align: center;
+          padding-top: 20px;
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        .text {
+          margin-top: 40px;
+          margin-left: 40px;
+        }
+
+        input {
+          padding: 4px;
+          font-size: 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        label {
+          padding-left: 10px;
+          padding-right: 20px;
+          font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+  <body>
+    <header>
+        <h1>RecordRecs</h1>
+    </header>
+
+    <div class="csv">
+          <p>You can upload a file for testing here...</p>
+          <input type="file" id="csvFile" accept=".csv" />
+          <p> or <button id="load_default">load the default dataset!</button></p>
+    </div>
+
+    <div class="text">
+      <p>
+        <form>
+            <label for="fsong">Input a song:</label>
+            <input type="text" id="fsong" name="fsong">
+            <button id="getRecommendations" disabled>Recommend me songs!</button>
+            <span id="searchStatus"></span>
+        </form>
+      </p>
+      <p>
+        <h2>Additional settings:</h2>
+      </p>
+      <p>
+        <!---
+          Add code here if you would like to add checkboxes for more fields!
+        -->
+        <label for="search_parameters">Search Parameters:</label>
+        <input type="checkbox" id="danceability" name="danceability" value="Danceability">
+        <label for="danceability">Danceability</label>
+        <input type="checkbox" id="acousticness" name="acousticness" value="Acousticness">
+        <label for="acousticness">Acousticness</label>
+        <input type="checkbox" id="energy" name="energy" value="Energy">
+        <label for="tempo">Energy</label>
+        <!-- <select name="search_parameters" id="search_parameters" multiple>
+          <option value="danceability">Danceability</option>
+          <option value="loudness">Loudness</option>
+          <option value="tempo">Tempo</option>
+        </select> -->
+      </p>
+      <br>
+      <p>
+        <label for="search_algorithm">Search Algorithm:</label>
+        <select name="search_algorithm" id="search_algorithm">
+          <option value="kd-tree">KD-Tree</option>
+          <option value="octree">Octree</option>
+        </select>
+
+        <label for="explicit">Explicit:</label>
+        <select name="explicit" id="explicit">
+          <option value="both">Both</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </p>
+    </div>
+
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Song Title</th>
+                    <th>Artist</th>
+                    <th>Length</th>
+                    <th>Reason for Recommendation</th>
+                </tr>
+            </thead>
+            <tbody id="results_table">
+                <tr>
+                    <td colspan="4" style="text-align: center;">Enter a song name and
+                      recommendations will appear here!</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <script src="algorithms.js"></script>
+    <script>
+      let songsDatabase = [];
+      let kdTree = null;
+      let octree = null;
+
+      function processCSV(csvText) {
+        const lines = csvText.trim().split('\n');
+
+        songsDatabase = [];
+        let in_quote = false;
+        let line = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          line = [""];
+          for (let j = 0; j < lines[i].length; j++) {
+            if (lines[i][j] == '"') {
+              in_quote = !in_quote;
+            }
+            else if (lines[i][j] == ',' && !in_quote) {
+              line.push("");
+            }
+            else {
+              line[line.length - 1] += lines[i][j];
+            }
+          }
+        songsDatabase.push(new Song(line));
+      }
+
+      console.log(`Loaded ${songsDatabase.length} songs`);
+
+      buildDataStructures();
+
+      document.getElementById('getRecommendations').disabled = false;
+      document.getElementById('searchStatus').textContent = "Dataset loaded!";
+      document.getElementById('searchStatus').style.color = "green";
+    }
+
+    // If file is uploaded
+    const file_input = document.getElementById('csvFile');
+    file_input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = event => {
+        processCSV(event.target.result);
+      };
+      reader.readAsText(file);
+    });
+
+    // Default document loading (will not work if HTML is opened directly in browser!)
+    document.getElementById('load_default').addEventListener('click', () => {
+      fetch('data.csv')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error ('CSV file not found');
+          }
+          return response.text();
+        })
+        .then(csvText => {
+          processCSV(csvText);
+        })
+        .catch(error => {
+          alert('Could not load default dataset. Please make sure that "data.csv" is in the same directory as "index.html".');
+          console.error(error);
+        });
+    });
+
+    function buildDataStructures() {
+      if (songsDatabase.length === 0) return;
+
+      const firstSong = songsDatabase[0];
+      let root = new KD_Node(null, firstSong, firstSong.acousticness, firstSong.danceability, firstSong.energy);
+      let root_oct = new Oct_Node(null, firstSong, firstSong.acousticness, firstSong.danceability, firstSong.energy);
+
+      kdTree = new KD_Tree(root);
+      octree = new Octree(root_oct);
+
+      for (let i = 1; i < songsDatabase.length; i++) {
+        kdTree.insert(new KD_Node(null, songsDatabase[i], songsDatabase[i].acousticness, songsDatabase[i].danceability, songsDatabase[i].energy));
+        octree.insert(new Oct_Node(null, songsDatabase[i], songsDatabase[i].acousticness, songsDatabase[i].danceability, songsDatabase[i].energy));
+      }
+
+      console.log('Data structures built successfully.');
+    }
+
+    function findSongByName(songName) {
+      const searchTerm = songName.toLowerCase().trim();
+      return songsDatabase.find(song => song.name.toLowerCase().includes(searchTerm));
+    }
+
+    function getRecommendations() {
+      const song_input = document.getElementById('fsong').value;
+      const algorithm = document.getElementById('search_algorithm').value;
+      const explicit_filter = document.getElementById('explicit').value;
+
+      if (!song_input) {
+        alert('Please enter a song name');
+        return;
+      }
+
+      const query_song = findSongByName(song_input);
+
+      if (!query_song) {
+        document.getElementById('results_table').innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align: center; color: red;">Song not found! Please try another song.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      const use_danceability = document.getElementById('danceability').checked;
+      const use_acousticness = document.getElementById('acousticness').checked;
+      const use_energy = document.getElementById('energy').checked;
+
+
+    let queryPoint = [
+      use_acousticness ? query_song.acousticness : 0.5,
+      use_danceability ? query_song.danceability : 0.5,
+      use_energy ? query_song.energy : 0.5];
+
+    let k = 21;
+    let nearest;
+
+    if (algorithm === 'kd-tree') {
+      nearest = kdTree.k_nearest_n(queryPoint, k);
+    }
+    else {
+      let qNode = new Oct_Node(null, null, queryPoint[0], queryPoint[1], queryPoint[2]);
+      nearest = octree.k_nearest_n(qNode, k);
+    }
+
+    let recommendations = nearest.filter(
+      node => node !== null && node.song.name !== query_song.name)
+      .filter(node => {
+        if (explicit_filter === 'yes') return node.song.explicit === 'True';
+        if (explicit_filter === 'no') return node.song.explicit === 'False';
+        return true;
+      }).slice(0, 20);
+
+    displayResults(recommendations, query_song, use_danceability, use_acousticness, use_energy);
+  }
+
+    function displayResults(recommendations, query_song, use_danceability, use_acousticness, use_energy) {
+      const tableBody = document.getElementById('results_table');
+
+      if (recommendations.length === 0) {
+        tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center;">No recommendations for selected filters. Try again after reselection!</td>
+        </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      recommendations.forEach(node => {
+        const song = node.song;
+        const duration_minutes = Math.floor(song.duration / 60000);
+        const duration_seconds = Math.floor((song.duration % 60000) / 1000);
+        const formattedDuration = `${duration_minutes}:${duration_seconds.toString().padStart(2, '0')}`;
+
+        let reasons = [];
+        if (use_acousticness) reasons.push(`acousticness (${song.acousticness})`);
+        if (use_danceability) reasons.push(`danceability (${song.danceability})`);
+        if (use_energy) reasons.push(`energy (${song.energy})`);
+
+        const reason = reasons.length > 0
+        ? `Similar ${reasons.join(', ')}`
+        : `Similar overall characteristics`;
+
+        html += `
+         <tr>
+            <td>${song.name}</td>
+            <td>${song.artists}</td>
+            <td>${formattedDuration}</td>
+            <td>${reason}</td>
+        </tr>
+        `;
+      });
+
+      tableBody.innerHTML = html;
+
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const recommendButton = document.getElementById('getRecommendations');
+      recommendButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        getRecommendations();
+      });
+
+      document.getElementById('fsong').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!recommendButton.disabled) {
+            getRecommendations();
+          }
+        }
+      });
+    });
+    </script>
   </body>
 </html>
