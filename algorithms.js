@@ -276,10 +276,6 @@ class KD_Tree {
 	}
 }
 
-
-
-
-
 class Octree {
 	constructor(root) {
 		this.root = root;
