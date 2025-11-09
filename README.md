@@ -1,4 +1,4 @@
-Thank you! For choosing RecordRecs for your new music recommendations, build by us here at AlgoRhythms.
+Thank you! For choosing RecordRecs for your new music recommendations, built by us here at AlgoRhythms.
 
 Before you get starting using our site, there are a few things to note:
 
