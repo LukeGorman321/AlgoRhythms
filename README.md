@@ -8,7 +8,7 @@ Before you get starting using our site, there are a few things to note:
 
    It's simple!
 
-   Once downloaded, open the folder withing your computer's terminal, either using 'cd' or your operating system to do so.
+   Once downloaded, open the folder within your computer's terminal or command prompt, either using 'cd' or your operating system to do so.
    Once your terminal is open inside the folder, use " python3 -m http.server 8000 ". You're welcome to use any port (e.g. 8000) you like,
    it should work the same.
 
